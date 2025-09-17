@@ -59,9 +59,7 @@ const scenes = [
     gif: 'animated.gif',
     duration: 18000, // Longer, more pensive scene
     animationClass: 'gate-zoom',
-    onStart: () => {
-      // The animation is handled by CSS.
-    },
+    onStart: () => { if (posterizeInstance) posterizeInstance.setFogCoverage(0.5); },
     onEnd: () => {
       // This is the last scene for now. It could fade to black or loop.
     }
