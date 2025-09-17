@@ -47,7 +47,7 @@ export function playGateCreak(){ if(gateCreakBuffer) playSound(gateCreakBuffer, 
 
 /* add long creak controller */
 let gateLongHandle = null;
-export function startGateLongCreak(durationSec=18, volume=0.22){
+export function startGateLongCreak(durationSec=18, volume=0.6){
   if(!audioUnlocked || gateLongHandle || !gateCreakBuffer) return;
   gateLongHandle = playSound(gateCreakBuffer, volume, null, false, 1.2);
   if(gateLongHandle){
