@@ -14,7 +14,7 @@ export async function loadAllSounds(){
   uiHoverBuffer = await loadSound('ui_hover.mp3');
   tvStaticLoopBuffer = await loadSound('tv_static_loop.mp3');
   primaryKnockBuffer = await loadSound('knock.mp3');
-  gateCreakBuffer = await loadSound('gate_creak.mp3');
+  gateCreakBuffer = await loadSound('gate_long_creak.mp3');
 }
 export async function unlockAudio(){
   if (audioUnlocked) return; if (audioCtx.state === 'suspended') await audioCtx.resume(); audioUnlocked = true;
@@ -49,8 +49,8 @@ export function playGateCreak(){ if(gateCreakBuffer) playSound(gateCreakBuffer, 
 let gateLongHandle = null;
 export function startGateLongCreak(durationSec=18, volume=0.22){
   if(!audioUnlocked || gateLongHandle || !gateCreakBuffer) return;
-  gateLongHandle = playSound(gateCreakBuffer, volume, null, true, 1.2);
-  if(gateLongHandle){ try{ gateLongHandle.source.playbackRate.value = 0.72; }catch{} 
+  gateLongHandle = playSound(gateCreakBuffer, volume, null, false, 1.2);
+  if(gateLongHandle){
     const fadeOut=1.2; setTimeout(()=>stopGateLongCreak(fadeOut), Math.max(0,(durationSec*1000 - fadeOut*1000)));
   }
 }

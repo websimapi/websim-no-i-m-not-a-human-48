@@ -151,7 +151,6 @@ async function transitionToScene(sceneIndex) {
     if (scene.animationClass && wrapper) wrapper.classList.add(scene.animationClass);
     let idx = 0;
     const playFrame = () => { if(currentSceneIndex!==sceneIndex) return;
-      playGateCreak();
       idx = (idx+1) % sceneAssets.frames.length; posterizeInstance.setImage(sceneAssets.frames[idx]);
       const delay = sceneAssets.delays[idx] || 100; slideshowTimer = setTimeout(playFrame, delay);
     };
