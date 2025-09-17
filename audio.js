@@ -2,7 +2,7 @@ const AUDIO_DURATION = 95, FADE = 15, FADE_OUT_START = 80;
 export const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 let audioUnlocked = false;
 let backgroundAudioElement;
-let knockBuffers = [], uiHoverBuffer = null, tvStaticLoopBuffer = null, primaryKnockBuffer = null, gateCreakBuffer = null;
+let knockBuffers = [], uiHoverBuffer = null, tvStaticLoopBuffer = null, primaryKnockBuffer = null, gateCreakBuffer = null, gateThudBuffer = null;
 let knockTimeoutId = null, knockingActive = false;
 
 async function loadSound(url){
@@ -15,6 +15,7 @@ export async function loadAllSounds(){
   tvStaticLoopBuffer = await loadSound('tv_static_loop.mp3');
   primaryKnockBuffer = await loadSound('knock.mp3');
   gateCreakBuffer = await loadSound('gate_long_creak.mp3');
+  gateThudBuffer = await loadSound('knock_4.mp3');
 }
 export async function unlockAudio(){
   if (audioUnlocked) return; if (audioCtx.state === 'suspended') await audioCtx.resume(); audioUnlocked = true;
@@ -27,10 +28,11 @@ export function setupBackgroundAudio(){
   audio.addEventListener('timeupdate', apply); audio.addEventListener('seeked', apply); audio.addEventListener('ended', ()=>{ audio.currentTime=0; audio.play(); });
   audio.play().catch(e=>console.error('BG play failed', e));
 }
-export function playSound(buffer, volume=1.0, onEnded=null, loop=false, fadeInDuration=0){
+export function playSound(buffer, volume=1.0, onEnded=null, loop=false, fadeInDuration=0, playbackRate=1){
   if (!audioUnlocked || !buffer) return null;
   try {
     const source = audioCtx.createBufferSource(); source.buffer = buffer; source.loop = loop;
+    source.playbackRate.value = playbackRate;
     const gainNode = audioCtx.createGain(); if (fadeInDuration>0){ gainNode.gain.setValueAtTime(0, audioCtx.currentTime); gainNode.gain.linearRampToValueAtTime(volume, audioCtx.currentTime + fadeInDuration); } else { gainNode.gain.value = volume; }
     source.connect(gainNode); gainNode.connect(audioCtx.destination); source.start(0);
     if (onEnded && !loop) source.addEventListener('ended', onEnded, { once:true });
@@ -44,6 +46,7 @@ export function scheduleNextKnock(){
 export function stopKnocks(){ knockingActive=false; if(knockTimeoutId){ clearTimeout(knockTimeoutId); knockTimeoutId=null; } }
 export function playPrimaryKnock(){ if(primaryKnockBuffer) playSound(primaryKnockBuffer, 1.0); }
 export function playGateCreak(volume=0.7){ if(gateCreakBuffer) playSound(gateCreakBuffer, volume); }
+export function playGateThud(volume=0.9, rate=0.85){ if(gateThudBuffer) playSound(gateThudBuffer, volume, null, false, 0, rate); }
 
 /* add long creak controller */
 let gateLongHandle = null;
