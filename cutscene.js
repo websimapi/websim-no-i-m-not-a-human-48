@@ -1,5 +1,5 @@
 import { applyPosterizeToImage } from './posterize.js';
-import { audioCtx, getBackgroundAudio, playGateCreak } from './audio.js';
+import { audioCtx, getBackgroundAudio, playGateCreak, startGateLongCreak, stopGateLongCreak } from './audio.js';
 import { animateBirds, stopBirds } from './birds.js';
 import { parseGIF, decompressFrames } from 'https://esm.sh/gifuct-js@2.0.0';
 
@@ -59,8 +59,9 @@ const scenes = [
     gif: 'animated.gif',
     duration: 18000, // Longer, more pensive scene
     animationClass: 'gate-zoom',
-    onStart: () => { if (posterizeInstance) posterizeInstance.setFogCoverage(0.5); },
+    onStart: () => { if (posterizeInstance) posterizeInstance.setFogCoverage(0.5); startGateLongCreak(18, 0.22); },
     onEnd: () => {
+      stopGateLongCreak(1.2);
       // This is the last scene for now. It could fade to black or loop.
     }
   }

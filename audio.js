@@ -44,5 +44,23 @@ export function scheduleNextKnock(){
 export function stopKnocks(){ knockingActive=false; if(knockTimeoutId){ clearTimeout(knockTimeoutId); knockTimeoutId=null; } }
 export function playPrimaryKnock(){ if(primaryKnockBuffer) playSound(primaryKnockBuffer, 1.0); }
 export function playGateCreak(){ if(gateCreakBuffer) playSound(gateCreakBuffer, 0.35); }
+
+/* add long creak controller */
+let gateLongHandle = null;
+export function startGateLongCreak(durationSec=18, volume=0.22){
+  if(!audioUnlocked || gateLongHandle || !gateCreakBuffer) return;
+  gateLongHandle = playSound(gateCreakBuffer, volume, null, true, 1.2);
+  if(gateLongHandle){ try{ gateLongHandle.source.playbackRate.value = 0.72; }catch{} 
+    const fadeOut=1.2; setTimeout(()=>stopGateLongCreak(fadeOut), Math.max(0,(durationSec*1000 - fadeOut*1000)));
+  }
+}
+export function stopGateLongCreak(fadeOut=1.2){
+  const h=gateLongHandle; if(!h) return; gateLongHandle=null;
+  try{ h.gainNode.gain.cancelScheduledValues(audioCtx.currentTime);
+    h.gainNode.gain.linearRampToValueAtTime(0, audioCtx.currentTime+fadeOut);
+    setTimeout(()=>{ try{ h.source.stop(); }catch{} }, fadeOut*1000);
+  }catch{}
+}
+
 export function getUIBuffers(){ return { uiHoverBuffer, tvStaticLoopBuffer }; }
 export function getBackgroundAudio(){ return backgroundAudioElement; }
