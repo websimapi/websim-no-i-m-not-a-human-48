@@ -49,6 +49,7 @@ export function playPrimaryKnock(){ if(primaryKnockBuffer) playSound(primaryKnoc
 export function playGateCreak(volume=0.7){ if(gateCreakBuffer) playSound(gateCreakBuffer, volume); }
 export function playGateThud(volume=0.9, rate=0.85){ if(gateThudBuffer) playSound(gateThudBuffer, volume, null, false, 0, rate); }
 export function playGateStuck(volume=0.7, rate=Math.random()*0.15+0.9){ if(gateStuckBuffer) playSound(gateStuckBuffer, volume, null, false, 0, rate); }
+export function playGateMetalHit(volume=1.0, rate=Math.random()*0.2+0.9){ if(gateThudBuffer) playSound(gateThudBuffer, volume, null, false, 0, rate); }
 
 /* add long creak controller */
 let gateLongHandle = null;
