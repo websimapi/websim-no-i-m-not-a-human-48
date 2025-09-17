@@ -43,16 +43,13 @@ export function scheduleNextKnock(){
 }
 export function stopKnocks(){ knockingActive=false; if(knockTimeoutId){ clearTimeout(knockTimeoutId); knockTimeoutId=null; } }
 export function playPrimaryKnock(){ if(primaryKnockBuffer) playSound(primaryKnockBuffer, 1.0); }
-export function playGateCreak(){ if(gateCreakBuffer) playSound(gateCreakBuffer, 0.35); }
+export function playGateCreak(volume=0.7){ if(gateCreakBuffer) playSound(gateCreakBuffer, volume); }
 
 /* add long creak controller */
 let gateLongHandle = null;
-export function startGateLongCreak(durationSec=18, volume=0.6){
+export function startGateLongCreak(volume=0.6){
   if(!audioUnlocked || gateLongHandle || !gateCreakBuffer) return;
-  gateLongHandle = playSound(gateCreakBuffer, volume, null, false, 1.2);
-  if(gateLongHandle){
-    const fadeOut=1.2; setTimeout(()=>stopGateLongCreak(fadeOut), Math.max(0,(durationSec*1000 - fadeOut*1000)));
-  }
+  gateLongHandle = playSound(gateCreakBuffer, volume, null, true, 1.2);
 }
 export function stopGateLongCreak(fadeOut=1.2){
   const h=gateLongHandle; if(!h) return; gateLongHandle=null;

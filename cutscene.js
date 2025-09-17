@@ -59,7 +59,7 @@ const scenes = [
     gif: 'animated.gif',
     duration: 18000, // Longer, more pensive scene
     animationClass: 'gate-zoom',
-    onStart: () => { if (posterizeInstance) posterizeInstance.setFogCoverage(0.5); startGateLongCreak(18, 0.6); },
+    onStart: () => { if (posterizeInstance) posterizeInstance.setFogCoverage(0.5); startGateLongCreak(0.6); },
     onEnd: () => {
       stopGateLongCreak(1.2);
       // This is the last scene for now. It could fade to black or loop.
@@ -151,7 +151,7 @@ async function transitionToScene(sceneIndex) {
     if (scene.animationClass && wrapper) wrapper.classList.add(scene.animationClass);
     let idx = 0;
     const playFrame = () => { if(currentSceneIndex!==sceneIndex) return;
-      idx = (idx+1) % sceneAssets.frames.length; posterizeInstance.setImage(sceneAssets.frames[idx]);
+      idx = (idx+1) % sceneAssets.frames.length; posterizeInstance.setImage(sceneAssets.frames[idx]); playGateCreak(0.9);
       const delay = sceneAssets.delays[idx] || 100; slideshowTimer = setTimeout(playFrame, delay);
     };
     requestAnimationFrame(()=>{ canvas.classList.add('reveal'); if(scene.onStart) scene.onStart(csElement, canvas);
