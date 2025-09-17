@@ -64,5 +64,16 @@ export function stopGateLongCreak(fadeOut=1.2){
   }catch{}
 }
 
+export function playGateRusticShift(){
+  // Layer short creaks with slight detune and offset + soft low thud
+  if(gateStuckBuffer){
+    playSound(gateStuckBuffer, 0.95, null, false, 0, 0.85);
+    setTimeout(()=>playSound(gateStuckBuffer, 0.6, null, false, 0, 0.75), 28);
+  }
+  if(gateThudBuffer){
+    setTimeout(()=>playSound(gateThudBuffer, 0.6, null, false, 0, 0.7), 12);
+  }
+}
+
 export function getUIBuffers(){ return { uiHoverBuffer, tvStaticLoopBuffer }; }
 export function getBackgroundAudio(){ return backgroundAudioElement; }
