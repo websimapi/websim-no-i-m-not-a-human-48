@@ -3,8 +3,6 @@ export const audioCtx = new (window.AudioContext || window.webkitAudioContext)()
 let audioUnlocked = false;
 let backgroundAudioElement;
 let knockBuffers = [], uiHoverBuffer = null, tvStaticLoopBuffer = null, primaryKnockBuffer = null, gateCreakBuffer = null, gateThudBuffer = null, gateStuckBuffer = null;
-/* add rustic stuck buffer */
-let gateRustStuckBuffer = null;
 let knockTimeoutId = null, knockingActive = false;
 
 async function loadSound(url){
@@ -19,8 +17,6 @@ export async function loadAllSounds(){
   gateCreakBuffer = await loadSound('gate_long_creak.mp3');
   gateThudBuffer = await loadSound('knock_4.mp3');
   gateStuckBuffer = await loadSound('gate_creak.mp3');
-  /* new rustic stuck load */
-  gateRustStuckBuffer = await loadSound('gate_stuck_rust.mp3');
 }
 export async function unlockAudio(){
   if (audioUnlocked) return; if (audioCtx.state === 'suspended') await audioCtx.resume(); audioUnlocked = true;
@@ -53,8 +49,6 @@ export function playPrimaryKnock(){ if(primaryKnockBuffer) playSound(primaryKnoc
 export function playGateCreak(volume=0.7){ if(gateCreakBuffer) playSound(gateCreakBuffer, volume); }
 export function playGateThud(volume=0.9, rate=0.85){ if(gateThudBuffer) playSound(gateThudBuffer, volume, null, false, 0, rate); }
 export function playGateStuck(volume=0.7, rate=Math.random()*0.15+0.9){ if(gateStuckBuffer) playSound(gateStuckBuffer, volume, null, false, 0, rate); }
-/* new rustic stuck player */
-export function playGateRustStuck(volume=1.0, rate=0.9+Math.random()*0.15){ if(gateRustStuckBuffer) playSound(gateRustStuckBuffer, volume, null, false, 0, rate); }
 
 /* add long creak controller */
 let gateLongHandle = null;
