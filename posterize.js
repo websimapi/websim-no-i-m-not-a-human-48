@@ -27,6 +27,9 @@ export function applyPosterizeToImage(canvas, image, levels = 5.0, edgeMix = 0.1
   uniform float uEdgeMix;
   uniform float uTime;
   uniform float uFogCoverage; // new uniform: 0.45 (sky only) to 1.5 (full screen)
+  uniform sampler2D uTex1;
+  uniform float uMix;
+  uniform vec2 uSlideDir;
   varying vec2 vUV;
 
   float luma(vec3 c){ return dot(c, vec3(0.299, 0.587, 0.114)); }
@@ -64,7 +67,13 @@ export function applyPosterizeToImage(canvas, image, levels = 5.0, edgeMix = 0.1
     vec2 motion = vec2(fbm(vUV * 2.5 + uTime * 0.08), fbm(vUV * 2.5 - uTime * 0.08));
     vec2 distortedUV = vUV + (motion - 0.5) * 0.1 * skyMask; // Apply displacement based on mask. Increased from 0.05
 
-    vec3 col = texture2D(uTex0, distortedUV).rgb;
+    // Mystic slide blend between current (uTex0) and next (uTex1)
+    float n = fbm(vUV * 4.0 + vec2(uTime * 0.2, -uTime * 0.15));
+    float mask = smoothstep(0.35, 0.65, uMix + (n - 0.5) * 0.6);
+    vec2 slide = normalize(uSlideDir + 1e-6) * 0.035;
+    vec3 aCol = texture2D(uTex0, distortedUV - slide * (1.0 - uMix)).rgb;
+    vec3 bCol = texture2D(uTex1, distortedUV + slide * uMix).rgb;
+    vec3 col = mix(aCol, bCol, mask);
 
     // Modulate posterization levels with fog motion in the sky
     float dynamicLevels = uLevels + motion.x * 3.0 * skyMask;
@@ -131,17 +140,28 @@ export function applyPosterizeToImage(canvas, image, levels = 5.0, edgeMix = 0.1
   gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
   let texW = image.naturalWidth || image.width, texH = image.naturalHeight || image.height;
 
+  // Secondary texture for slide transition
+  const tex1 = gl.createTexture(); gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, tex1);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+  gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false); gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,image);
+
   const uTexel = gl.getUniformLocation(prog, 'uTexel');
   const uLevels = gl.getUniformLocation(prog, 'uLevels');
   const uEdgeMix = gl.getUniformLocation(prog, 'uEdgeMix');
   const uTime = gl.getUniformLocation(prog, 'uTime');
   const uFogCoverage = gl.getUniformLocation(prog, 'uFogCoverage'); // Get location for new uniform
+  const uTex1 = gl.getUniformLocation(prog, 'uTex1');
+  const uMix = gl.getUniformLocation(prog, 'uMix');
+  const uSlideDir = gl.getUniformLocation(prog, 'uSlideDir');
   const startTime = performance.now();
 
   function draw() {
     const time = (performance.now() - startTime) / 1000.0;
     gl.viewport(0, 0, canvas.width, canvas.height);
     gl.useProgram(prog);
+    gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, tex); gl.uniform1i(gl.getUniformLocation(prog,'uTex0'), 0);
+    gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, tex1); gl.uniform1i(uTex1, 1);
     gl.uniform2f(uTexel, 1.0 / texW, 1.0 / texH);
     gl.uniform1f(uLevels, levels);
     gl.uniform1f(uEdgeMix, edgeMix);
@@ -159,16 +179,26 @@ export function applyPosterizeToImage(canvas, image, levels = 5.0, edgeMix = 0.1
   animate();
   window.addEventListener('resize', resize, { passive: true });
 
+  let mixVal = 0.0, transId = null;
+
   // Return an object with cleanup and a method to update the uniform
   return {
     cleanup: () => {
         if (animationFrameId) {
             cancelAnimationFrame(animationFrameId);
         }
+        if (transId) cancelAnimationFrame(transId);
         window.removeEventListener('resize', resize);
         // Consider cleaning up other resources if this component can be destroyed
     },
     setImage: (img) => { gl.bindTexture(gl.TEXTURE_2D, tex); gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,img); texW=img.width||img.naturalWidth; texH=img.height||img.naturalHeight; },
+    setImageWithTransition: (nextImg, dir=[1,0], duration=600) => {
+        if (transId) cancelAnimationFrame(transId);
+        gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, tex1); gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,nextImg);
+        gl.useProgram(prog); gl.uniform2f(uSlideDir, dir[0], dir[1]);
+        const st = performance.now(); const step=(now)=>{ const k=Math.min(1,(now-st)/duration); mixVal=k; gl.uniform1f(uMix, mixVal); if(k<1) transId=requestAnimationFrame(step); else { gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, tex); gl.copyTexImage2D(gl.TEXTURE_2D,0,gl.RGBA,0,0,texW,texH,0); gl.uniform1f(uMix, 0.0); } };
+        gl.uniform1f(uMix, 0.0); transId=requestAnimationFrame(step);
+    },
     setFogCoverage: (value) => {
         gl.useProgram(prog);
         gl.uniform1f(uFogCoverage, value);
