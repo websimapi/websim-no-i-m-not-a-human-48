@@ -2,7 +2,7 @@ const AUDIO_DURATION = 95, FADE = 15, FADE_OUT_START = 80;
 export const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 let audioUnlocked = false;
 let backgroundAudioElement;
-let knockBuffers = [], uiHoverBuffer = null, tvStaticLoopBuffer = null, primaryKnockBuffer = null;
+let knockBuffers = [], uiHoverBuffer = null, tvStaticLoopBuffer = null, primaryKnockBuffer = null, gateCreakBuffer = null;
 let knockTimeoutId = null, knockingActive = false;
 
 async function loadSound(url){
@@ -14,6 +14,7 @@ export async function loadAllSounds(){
   uiHoverBuffer = await loadSound('ui_hover.mp3');
   tvStaticLoopBuffer = await loadSound('tv_static_loop.mp3');
   primaryKnockBuffer = await loadSound('knock.mp3');
+  gateCreakBuffer = await loadSound('gate_creak.mp3');
 }
 export async function unlockAudio(){
   if (audioUnlocked) return; if (audioCtx.state === 'suspended') await audioCtx.resume(); audioUnlocked = true;
@@ -42,5 +43,6 @@ export function scheduleNextKnock(){
 }
 export function stopKnocks(){ knockingActive=false; if(knockTimeoutId){ clearTimeout(knockTimeoutId); knockTimeoutId=null; } }
 export function playPrimaryKnock(){ if(primaryKnockBuffer) playSound(primaryKnockBuffer, 1.0); }
+export function playGateCreak(){ if(gateCreakBuffer) playSound(gateCreakBuffer, 0.35); }
 export function getUIBuffers(){ return { uiHoverBuffer, tvStaticLoopBuffer }; }
 export function getBackgroundAudio(){ return backgroundAudioElement; }

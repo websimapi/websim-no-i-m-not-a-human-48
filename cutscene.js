@@ -1,5 +1,5 @@
 import { applyPosterizeToImage } from './posterize.js';
-import { audioCtx, getBackgroundAudio } from './audio.js';
+import { audioCtx, getBackgroundAudio, playGateCreak } from './audio.js';
 import { animateBirds, stopBirds } from './birds.js';
 import { parseGIF, decompressFrames } from 'https://esm.sh/gifuct-js@2.0.0';
 
@@ -150,9 +150,8 @@ async function transitionToScene(sceneIndex) {
     if (scene.animationClass && wrapper) wrapper.classList.add(scene.animationClass);
     let idx = 0;
     const playFrame = () => { if(currentSceneIndex!==sceneIndex) return;
-      idx = (idx+1) % sceneAssets.frames.length;
-      const dir = [Math.random()*2-1, Math.random()*2-1];
-      posterizeInstance.setImageWithTransition(sceneAssets.frames[idx], dir, 550);
+      playGateCreak();
+      idx = (idx+1) % sceneAssets.frames.length; posterizeInstance.setImage(sceneAssets.frames[idx]);
       const delay = sceneAssets.delays[idx] || 100; slideshowTimer = setTimeout(playFrame, delay);
     };
     requestAnimationFrame(()=>{ canvas.classList.add('reveal'); if(scene.onStart) scene.onStart(csElement, canvas);
