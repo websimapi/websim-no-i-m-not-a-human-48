@@ -1,5 +1,5 @@
 import { applyPosterizeToImage } from './posterize.js';
-import { audioCtx, getBackgroundAudio, startGateLongCreak, stopGateLongCreak, playGateMetalHit } from './audio.js';
+import { audioCtx, getBackgroundAudio, playGateCreak, startGateLongCreak, stopGateLongCreak, playGateThud, playGateStuck, playGateFrameClank } from './audio.js';
 import { animateBirds, stopBirds } from './birds.js';
 import { parseGIF, decompressFrames } from 'https://esm.sh/gifuct-js@2.0.0';
 
@@ -75,6 +75,7 @@ let isTransitioning = false;
 let csElement = null;
 let preloadedAssets = [];
 let slideshowTimer = null;
+let gateFrameClickHandler = null;
 
 const skipCurrentScene = () => {
   if (currentSceneIndex < scenes.length - 1) {
@@ -90,6 +91,8 @@ async function transitionToScene(sceneIndex) {
   const gifWrapper = document.getElementById('cutscene-gif-wrapper');
   csElement.removeEventListener('click', skipCurrentScene);
   if (autoSkipTimeout) clearTimeout(autoSkipTimeout);
+  // remove previous scene-3 click advance handler if any
+  if (gateFrameClickHandler) { csElement.removeEventListener('click', gateFrameClickHandler); gateFrameClickHandler = null; }
   
   const isExitingScene2 = currentSceneIndex === 1;
 
@@ -150,10 +153,28 @@ async function transitionToScene(sceneIndex) {
     const wrapper = document.getElementById('cutscene-canvas-wrapper');
     if (scene.animationClass && wrapper) wrapper.classList.add(scene.animationClass);
     let idx = 0;
-    const playFrame = () => { if(currentSceneIndex!==sceneIndex) return;
-      idx = (idx+1) % sceneAssets.frames.length; posterizeInstance.setImage(sceneAssets.frames[idx]); playGateMetalHit(1.0);
-      const delay = sceneAssets.delays[idx] || 100; slideshowTimer = setTimeout(playFrame, delay);
+    const maxFrames = 3; // As per instruction, stop at the 3rd frame (index 2)
+
+    const playFrame = () => {
+      if (currentSceneIndex !== sceneIndex) return;
+      idx++;
+      if (idx < maxFrames && idx < sceneAssets.frames.length) {
+        posterizeInstance.setImage(sceneAssets.frames[idx]);
+        playGateFrameClank(1.0);
+        const delay = sceneAssets.delays[idx] || 100;
+        slideshowTimer = setTimeout(playFrame, delay);
+      } else {
+        // We've reached the last frame, stop audio.
+        stopGateLongCreak(0.5); // Quicker fade out as the gate stops moving
+        if (autoSkipTimeout) clearTimeout(autoSkipTimeout); // also cancel the scene skip timeout
+        if (gateFrameClickHandler) { csElement.removeEventListener('click', gateFrameClickHandler); gateFrameClickHandler = null; }
+      }
     };
+
+    // allow user click to advance to next frame immediately
+    gateFrameClickHandler = () => { if (slideshowTimer) { clearTimeout(slideshowTimer); slideshowTimer = null; } playFrame(); };
+    csElement.addEventListener('click', gateFrameClickHandler);
+    
     requestAnimationFrame(()=>{ canvas.classList.add('reveal'); if(scene.onStart) scene.onStart(csElement, canvas);
       slideshowTimer = setTimeout(playFrame, sceneAssets.delays[0]||100);
       if (currentSceneIndex < scenes.length - 1) { autoSkipTimeout = setTimeout(skipCurrentScene, scene.duration); csElement.addEventListener('click', skipCurrentScene, { once:true }); }

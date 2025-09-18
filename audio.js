@@ -49,7 +49,6 @@ export function playPrimaryKnock(){ if(primaryKnockBuffer) playSound(primaryKnoc
 export function playGateCreak(volume=0.7){ if(gateCreakBuffer) playSound(gateCreakBuffer, volume); }
 export function playGateThud(volume=0.9, rate=0.85){ if(gateThudBuffer) playSound(gateThudBuffer, volume, null, false, 0, rate); }
 export function playGateStuck(volume=0.7, rate=Math.random()*0.15+0.9){ if(gateStuckBuffer) playSound(gateStuckBuffer, volume, null, false, 0, rate); }
-export function playGateMetalHit(volume=1.0, rate=Math.random()*0.2+0.9){ if(gateThudBuffer) playSound(gateThudBuffer, volume, null, false, 0, rate); }
 
 /* add long creak controller */
 let gateLongHandle = null;
@@ -63,6 +62,30 @@ export function stopGateLongCreak(fadeOut=1.2){
     h.gainNode.gain.linearRampToValueAtTime(0, audioCtx.currentTime+fadeOut);
     setTimeout(()=>{ try{ h.source.stop(); }catch{} }, fadeOut*1000);
   }catch{}
+}
+
+export function playGateFrameClank(intensity=1){
+  if(!audioUnlocked) return;
+  const t = audioCtx.currentTime;
+  const metalHit = gateThudBuffer || knockBuffers[3] || knockBuffers[0];
+
+  if (gateStuckBuffer) { // scrape/snag
+    const s = audioCtx.createBufferSource(); s.buffer = gateStuckBuffer; s.playbackRate.value = 0.9 + Math.random()*0.2;
+    const hp = audioCtx.createBiquadFilter(); hp.type='highpass'; hp.frequency.value = 700 + Math.random()*600;
+    const g = audioCtx.createGain(); g.gain.value = 0.55 * intensity;
+    s.connect(hp).connect(g).connect(audioCtx.destination); s.start(t);
+  }
+  if (metalHit) { // heavy clank
+    const s = audioCtx.createBufferSource(); s.buffer = metalHit; s.playbackRate.value = 0.78 + Math.random()*0.12;
+    const lp = audioCtx.createBiquadFilter(); lp.type='lowpass'; lp.frequency.value = 3200;
+    const g = audioCtx.createGain(); g.gain.value = 0.9 * intensity;
+    s.connect(lp).connect(g).connect(audioCtx.destination); s.start(t + 0.015);
+  }
+  if (gateCreakBuffer) { // brief squeal tail
+    const s = audioCtx.createBufferSource(); s.buffer = gateCreakBuffer; s.playbackRate.value = 1.12 + Math.random()*0.12;
+    const g = audioCtx.createGain(); g.gain.value = 0.32 * intensity;
+    s.connect(g).connect(audioCtx.destination); s.start(t + 0.06);
+  }
 }
 
 export function getUIBuffers(){ return { uiHoverBuffer, tvStaticLoopBuffer }; }
